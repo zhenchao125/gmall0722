@@ -17,7 +17,8 @@ object PropertiesUtil {
         
         map.getOrElseUpdate(configFile, {
             println("abc")
-            val is: InputStream = ClassLoader.getSystemResourceAsStream(configFile)
+            
+            val is: InputStream = getClass.getClassLoader.getResourceAsStream(configFile)
             val ps: Properties = new Properties()
             ps.load(is)
             ps

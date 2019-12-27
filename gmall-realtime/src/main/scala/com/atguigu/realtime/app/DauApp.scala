@@ -21,7 +21,7 @@ import redis.clients.jedis.Jedis
 object DauApp {
     def main(args: Array[String]): Unit = {
         // 1. 从kafka读数据
-        val conf: SparkConf = new SparkConf().setMaster("local[2]").setAppName("RealtimeApp")
+        val conf: SparkConf = new SparkConf().setAppName("RealtimeApp").setMaster("local[2]")
         val ssc: StreamingContext = new StreamingContext(conf, Seconds(5))
         val sourceDStream: InputDStream[(String, String)] = MyKafkaUtil.getKafkaStream(ssc, Constant.TOPIC_STARTUP)
         
@@ -44,6 +44,7 @@ object DauApp {
             val bdSet: Broadcast[util.Set[String]] = ssc.sparkContext.broadcast(midSet)
             rdd
                 .filter(log => {
+                    println(bdSet.value)
                     !bdSet.value.contains(log.mid)
                 })
                 .map(log => (log.mid, log)) // 考虑到一个窗口内, 右可能一个mid会启动多次, 所以需要做排序, 然后只取一个
