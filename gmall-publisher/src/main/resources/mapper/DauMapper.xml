@@ -3,6 +3,15 @@
 
 <mapper namespace="com.atguigu.gmallpublisher.mapper.DauMapper">
     <select id="getDau" resultType="java.lang.Long">
-        select count(*) from GMALL_DAU where logDate=#{date};
+        select count(*) from GMALL_DAU where LOGDATE=#{date}
     </select>
+
+
+    <select id="getHourDau" resultMap="hourDauList">
+        select LOGHOUR, count(*) COUNT from GMALL_DAU where LOGDATE=#{date} group by LOGHOUR
+    </select>
+
+    <resultMap id="hourDauList" type="java.util.Map" autoMapping="true"></resultMap>
+
+
 </mapper>

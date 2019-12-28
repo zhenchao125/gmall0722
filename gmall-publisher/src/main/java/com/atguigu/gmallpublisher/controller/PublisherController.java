@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +25,7 @@ public class PublisherController {
 
     // http://localhost:8070/realtime-total?date=2019-09-20
     @GetMapping("/realtime-total")
-    public String getDau(@RequestParam("date") String date){
+    public String getDau(@RequestParam("date") String date) {
 
         /*
         [{"id":"dau","name":"新增日活","value":1200},
@@ -48,4 +49,39 @@ public class PublisherController {
 
         return JSON.toJSONString(result);
     }
+
+    // http://localhost:8070/realtime-hour?id=dau&date=2019-09-20
+    @GetMapping("/realtime-hour")
+    public String getHourDau(@RequestParam("id") String id, @RequestParam("date") String date) {
+        if ("dau".equals(id)) {
+            /*
+            {"yesterday":{"11":383,"12":123,"17":88,"19":200 },
+              "today":{"12":38,"13":1233,"17":123,"19":688 }}
+
+             */
+
+            Map<String, Map<String, Long>> resultMap = new HashMap<>();
+
+            // 今天
+            resultMap.put("today", service.getHourDau(date));
+
+            // 昨天
+            resultMap.put("yesterday", service.getHourDau(getYesterday(date)));
+
+            return JSON.toJSONString(resultMap);
+        } else {
+
+        }
+
+        return "ok";
+
+    }
+
+    private String getYesterday(String date) {
+
+        return LocalDate.parse(date).minusDays(1).toString();
+
+    }
+
+
 }
