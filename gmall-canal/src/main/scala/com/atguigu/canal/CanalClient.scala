@@ -57,7 +57,7 @@ message 一次可以拉一个message, 一个message可以看成是由多条sql�
 Entry  实体 一个message封装多个Entry. 一个Entry表示一条sql执行的结果(多行变化)
     StoreValue 一个Entry封装一个StoreValue, 可以看成是序列化的数据
 RowChange 表示一行变化大数据. 一个StoreValue会存储1个RowChange
-    RowData 变化的数据
+    RowData 变化的数据 对应以一行数据  一个RowChange对应对个RowData
 Column 列   列名和值
 
 kafka: {"cn", "value", }
