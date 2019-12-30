@@ -47,6 +47,14 @@ public class PublisherController {
         map2.put("name", "新增设备");
         map2.put("value", "233");
 
+
+        HashMap<String, Object> map3 = new HashMap<>();
+        result.add(map3);
+        map3.put("id", "order_amount");
+        map3.put("name", "新增交易额");
+        map3.put("value", service.getAmountTotal(date));
+
+
         return JSON.toJSONString(result);
     }
 
@@ -69,8 +77,19 @@ public class PublisherController {
             resultMap.put("yesterday", service.getHourDau(getYesterday(date)));
 
             return JSON.toJSONString(resultMap);
-        } else {
+        } else if ("order_amount".equals(id)) {
+            /*
+            {"yesterday":{"11":383,"12":123,"17":88,"19":200 },
+                "today":{"12":38,"13":1233,"17":123,"19":688 }}
 
+             */
+            Map<String, Map<String, Double>> resultMap = new HashMap<>();
+            // 今天
+            resultMap.put("today", service.getHourAmount(date));
+
+            // 昨天
+            resultMap.put("yesterday", service.getHourAmount(getYesterday(date)));
+            return JSON.toJSONString(resultMap);
         }
 
         return "ok";

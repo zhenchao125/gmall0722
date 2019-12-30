@@ -1,9 +1,11 @@
 package com.atguigu.gmallpublisher.service;
 
 import com.atguigu.gmallpublisher.mapper.DauMapper;
+import com.atguigu.gmallpublisher.mapper.OrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,10 @@ public class PublisherServiceImp implements PublisherService {
 
     @Autowired
     public DauMapper dauMapper;
+    @Autowired
+    public OrderMapper orderMapper;
+
+
 
     /**
      * 获取指定日志的日活总数
@@ -54,6 +60,36 @@ public class PublisherServiceImp implements PublisherService {
             resultMap.put(key, value);
         }
 
+        return resultMap;
+    }
+
+    /**
+     * 销售总额
+     * @param date
+     * @return
+     */
+    @Override
+    public Double getAmountTotal(String date) {
+        return orderMapper.getAmountTotal(date);
+    }
+
+    /**
+     * 小时明细
+     * @param date
+     * @return
+     */
+    @Override
+    public Map<String, Double> getHourAmount(String date) {
+
+
+        List<Map<String, Double>> mapList = orderMapper.getHourAmount(date);
+
+        Map<String, Double> resultMap = new HashMap<>();
+        for (Map map : mapList) {
+            String key = (String) map.get("CREATE_HOUR");
+            Double value = ((BigDecimal) map.get("SUM")).doubleValue();
+            resultMap.put(key, value);
+        }
         return resultMap;
     }
 }
