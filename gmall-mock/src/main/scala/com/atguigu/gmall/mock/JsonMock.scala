@@ -37,7 +37,7 @@ object JsonMock {
     // 用户行为的分布(事件分布)
     val eventOpts: RandomOptions[String] = RandomOptions(
         ("addFavor", 10), ("addComment", 30),
-        ("addCart", 20), ("clickItem", 40))
+        ("addCart", 20), ("clickItem", 5), ("coupon", 70))
     
     // app 分发渠道分布
     val channelOpts: RandomOptions[String] = RandomOptions(
@@ -45,7 +45,7 @@ object JsonMock {
         ("360", 20), ("tencent", 20), ("baidu", 10), ("website", 10))
     
     // 生成模拟数据的时候是否结束退出
-    val quitOpts: RandomOptions[Boolean] = RandomOptions((true, 5), (false, 95))
+    val quitOpts: RandomOptions[Boolean] = RandomOptions((true, 40), (false, 60))
     
     // 模拟出来一条启动日志
     def initOneStartupLog(): String = {
@@ -60,8 +60,8 @@ object JsonMock {
         `area` string COMMENT '城市'
         `channel` string COMMENT '渠道'
          */
-        val mid: String = "mid_" + RandomNumUtil.randomInt(1, 500)
-        val uid: String = "" + RandomNumUtil.randomInt(1, 10000)
+        val mid: String = "mid_" + RandomNumUtil.randomInt(1, 10)
+        val uid: String = "" + RandomNumUtil.randomInt(1, 100)
         val os: String = osOpts.getRandomOption()
         val appId: String = this.appId
         val area: String = areaOpts.getRandomOption()
@@ -127,7 +127,7 @@ object JsonMock {
                 println(oneEventLog)
                 // 发送事件日志
                 LogUploader.sendLog(oneEventLog)
-                Thread.sleep(500)
+                Thread.sleep(100)
             }
             Thread.sleep(1000)
         })
