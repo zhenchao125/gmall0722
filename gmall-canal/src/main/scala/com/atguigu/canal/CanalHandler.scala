@@ -25,6 +25,7 @@ object CanalHandler {
                     jsonObj.put(column.getName, column.getValue)
                 }
                 println(jsonObj.toJSONString)
+                // 写入到Kafka
                 MyKafkaUtil.send(Constant.TOPIC_ORDER, jsonObj.toJSONString)
             }
         }
