@@ -1,7 +1,7 @@
 package com.atguigu.realtime.app
 
 import com.alibaba.fastjson.JSON
-import com.atguigu.gmall.common.util.Constant
+import com.atguigu.gmall.common.util.{Constant, ESUtil}
 import com.atguigu.realtime.bean
 import com.atguigu.realtime.bean.{AlertInfo, EventLog}
 import com.atguigu.realtime.util.MyKafkaUtil
@@ -35,21 +35,21 @@ object AlertApp {
             .map {
                 case (mid, eventLogIt) =>
                     // 保存领取过优惠券的用户
-                    val uidSet: mutable.HashSet[String] = new mutable.HashSet[String]()
+                    val uidSet = new java.util.HashSet[String]()
                     // 优惠券对应的商品id
-                    val itemSet: mutable.HashSet[String] = new mutable.HashSet[String]()
+                    val itemSet = new java.util.HashSet[String]()
                     // 保存用户的所有事件
-                    val eventList: ListBuffer[String] = new mutable.ListBuffer[String]()
+                    val eventList = new java.util.ArrayList[String]()
                 
                 
                     // 用来表示这5分钟内是否有点击商品
                     var isClicked = false
                     breakable {
                         eventLogIt.foreach(eventLog => {
-                            eventList += eventLog.eventId
+                            eventList.add(eventLog.eventId)
                             if (eventLog.eventId == "coupon") {
-                                uidSet += eventLog.uid // 保存领优惠券的用户的id
-                                itemSet += eventLog.itemId // 优惠券对应的商品id
+                                uidSet.add(eventLog.uid) // 保存领优惠券的用户的id
+                                itemSet.add(eventLog.itemId) // 优惠券对应的商品id
                             } else if (eventLog.eventId == "clickItem") {
                                 // 一旦出现点击商品, 就不可能再有预警, 所以, 直接退出这个遍历
                                 isClicked = true
@@ -63,8 +63,15 @@ object AlertApp {
         // 写入到es
         alertInfoDStream.filter(_._1).map(_._2).foreachRDD(rdd =>{
             //
+            rdd.foreachPartition(it => {
+                ESUtil.insertBulk("gmall_coupon_alert", it.map(info => {
+                    // 保证一个分钟内每个mid只会最多一条预警
+                    (info.mid + "_" + info.ts / 1000 / 60, info)
+                }))
+            })
         } )
-        
+    
+        alertInfoDStream.print(100)
         
         ssc.start()
         ssc.awaitTermination()
