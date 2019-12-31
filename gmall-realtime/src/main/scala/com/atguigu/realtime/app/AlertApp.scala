@@ -1,16 +1,13 @@
 package com.atguigu.realtime.app
 
 import com.alibaba.fastjson.JSON
-import com.atguigu.gmall.common.util.{Constant, ESUtil}
-import com.atguigu.realtime.bean
+import com.atguigu.gmall.common.util.{Constant}
 import com.atguigu.realtime.bean.{AlertInfo, EventLog}
 import com.atguigu.realtime.util.MyKafkaUtil
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.{Minutes, Seconds, StreamingContext}
 
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks._
 
 /**
@@ -40,8 +37,8 @@ object AlertApp {
                     val itemSet = new java.util.HashSet[String]()
                     // 保存用户的所有事件
                     val eventList = new java.util.ArrayList[String]()
-                
-                
+                    
+                    
                     // 用来表示这5分钟内是否有点击商品
                     var isClicked = false
                     breakable {
@@ -61,16 +58,18 @@ object AlertApp {
                     (!isClicked && uidSet.size >= 3, AlertInfo(mid, uidSet, itemSet, eventList, System.currentTimeMillis()))
             }
         // 写入到es
-        alertInfoDStream.filter(_._1).map(_._2).foreachRDD(rdd =>{
-            //
+        alertInfoDStream.filter(_._1).map(_._2).foreachRDD(rdd => {
+            /*//
             rdd.foreachPartition(it => {
                 ESUtil.insertBulk("gmall_coupon_alert", it.map(info => {
                     // 保证一个分钟内每个mid只会最多一条预警
                     (info.mid + "_" + info.ts / 1000 / 60, info)
                 }))
-            })
-        } )
-    
+            })*/
+            import com.atguigu.realtime.util.ImplicitUtil._
+            rdd.saveToES("gmall_coupon_alert")
+        })
+        
         alertInfoDStream.print(100)
         
         ssc.start()

@@ -3,6 +3,7 @@ package com.atguigu.gmall.common.util
 import io.searchbox.client.config.HttpClientConfig
 import io.searchbox.client.{JestClient, JestClientFactory}
 import io.searchbox.core.{Bulk, Index}
+import org.apache.spark.rdd.RDD
 
 /**
   * Author atguigu
@@ -61,7 +62,6 @@ object ESUtil {
                 val action: Index = new Index.Builder(source).id(id).build()
                 bulk.addAction(action)
             case source =>
-                println(source)
                 val action: Index = new Index.Builder(source).build()
                 bulk.addAction(action)
         }
@@ -81,7 +81,9 @@ object ESUtil {
         */
         
     }
+    
 }
+
 
 //case class User(age: Int, name: String)
 
