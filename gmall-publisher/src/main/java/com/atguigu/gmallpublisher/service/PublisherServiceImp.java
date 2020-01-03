@@ -111,7 +111,7 @@ public class PublisherServiceImp implements PublisherService {
         // 返回的最终结果
         HashMap<String, Object> resultMap = new HashMap<>();
         String dsl = DSLUtil.getDSL(date, keyWord, field, size, startPage, pageSize);
-
+        System.out.println(dsl);
         // 1. es客户端
         JestClient client = ESUtil.getClient();
 

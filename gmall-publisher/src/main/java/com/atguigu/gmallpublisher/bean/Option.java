@@ -8,6 +8,14 @@ public class Option {
     private String name;
     private double value;
 
+    public Option() {
+    }
+
+    public Option(String name, double value) {
+        this.name = name;
+        this.value = value;
+    }
+
     public String getName() {
         return name;
     }

@@ -104,8 +104,8 @@ public class PublisherController {
                                 @RequestParam("size") int size,
                                 @RequestParam("keyword") String keyword) throws IOException {
         // 1. 获取聚合结果
-        Map<String, Object> resultAge = service.getSaleDetailAndAggregationByField(date, keyword, "user_age", size, startpage, 100);
-        Map<String, Object> resultGender = service.getSaleDetailAndAggregationByField(date, keyword, "user_gender", size, startpage, 2);
+        Map<String, Object> resultAge = service.getSaleDetailAndAggregationByField(date, keyword, "user_age", 100, startpage, size);
+        Map<String, Object> resultGender = service.getSaleDetailAndAggregationByField(date, keyword, "user_gender", 2, startpage, size);
 
         // 2. 最终的封装对象
         SaleInfo saleInfo = new SaleInfo();
@@ -120,8 +120,26 @@ public class PublisherController {
         // 5. 两个饼图
         // 5.1 关于年龄的饼图
         Stat ageStat = new Stat();
-
-
+        ageStat.addOption(new Option("20岁以下", 0));
+        ageStat.addOption(new Option("20岁以上30岁以下", 0));
+        ageStat.addOption(new Option("30岁以上", 0));
+        HashMap<String, Long> aggMap = (HashMap<String, Long>) resultAge.get("aggMap");
+        Set<Map.Entry<String, Long>> ens = aggMap.entrySet();
+        for (Map.Entry<String, Long> entry : ens) {
+            int age = Integer.parseInt(entry.getKey());  // 10
+            Long count = entry.getValue();  // 2
+            List<Option> options = ageStat.getOptions();
+            if (age < 20) {
+                Option o0 = options.get(0);
+                o0.setValue(o0.getValue() + count);
+            } else if (age <= 30) {
+                Option o1 = options.get(1);
+                o1.setValue(o1.getValue() + count);
+            } else {
+                Option o2 = options.get(2);
+                o2.setValue(o2.getValue() + count);
+            }
+        }
         saleInfo.addStat(ageStat);
         // 5.2 关于性别的饼图
         Stat genderStat = new Stat();
