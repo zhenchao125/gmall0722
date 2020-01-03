@@ -45,23 +45,27 @@ object SaleDetailApp {
             // 一个分区一个连接
             val client: Jedis = RedisUtil.getJedisClient
             // 获取连接到redis的客户端
-            it.flatMap {
+            val result = it.flatMap {
                 case (orderId, (Some(orderInfo), Some(orderDetail))) =>
+                    println("some some")
                     // 1. orderInfo缓存到redis
                     cacheOrderInfo(client, orderInfo)
                     // 2. 组合一个所谓的宽表: 新的样例类(订单信息, 订单详情, 用户的信息)
                     List(SaleDetail().mergeOrderInfo(orderInfo).mergeOrderDetail(orderDetail))
                 case (orderId, (Some(orderInfo), None)) =>
+                    println("some none")
                     // 1. 缓存到redis
                     cacheOrderInfo(client, orderInfo)
                     // 2. 去orderDetail 缓存中查找数据  一个orderInfo对应多个orderDetail
                     // 3. 查到就组成宽表
                     import scala.collection.JavaConversions._
-                    client.keys(s"order_detail_${orderInfo.id}_*").toList.map(jsonString => {
-                        val orderDetail: OrderDetail = JSON.parseObject(jsonString, classOf[OrderDetail])
+                    client.keys(s"order_detail_${orderInfo.id}_*").toList.map(key => {
+                        println(key)
+                        val orderDetail: OrderDetail = JSON.parseObject(client.get(key), classOf[OrderDetail])
                         SaleDetail().mergeOrderInfo(orderInfo).mergeOrderDetail(orderDetail)
                     })
                 case (orderId, (None, Some(orderDetail))) =>
+                    println("none some")
                     // 1. 去orderInfo缓存中去查找数据  key在redis中不存在, 则返回null
                     val orderInfoString: String = client.get(s"order_info_${orderDetail.order_id}")
                     
@@ -70,11 +74,13 @@ object SaleDetailApp {
                         val orderInfo: OrderInfo = JSON.parseObject(orderInfoString, classOf[OrderInfo])
                         List(SaleDetail().mergeOrderInfo(orderInfo).mergeOrderDetail(orderDetail))
                     } else {
-                        cacheOrderDetail(client, orderDetail)
                         // 3. 找不到把数据缓存到redis
+                        cacheOrderDetail(client, orderDetail)
                         List[SaleDetail]()
                     }
             }
+            client.close()
+            result
         })
         
         // 3. 补充用户信息  从 mysql 去读取用户信息

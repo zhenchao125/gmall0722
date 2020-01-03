@@ -1,10 +1,16 @@
 package com.atguigu.gmallpublisher.service;
 
+import com.atguigu.gmall.common.util.Constant;
+import com.atguigu.gmall.common.util.ESUtil;
 import com.atguigu.gmallpublisher.mapper.DauMapper;
 import com.atguigu.gmallpublisher.mapper.OrderMapper;
+import io.searchbox.client.JestClient;
+import io.searchbox.core.Search;
+import io.searchbox.core.SearchResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -90,6 +96,39 @@ public class PublisherServiceImp implements PublisherService {
             Double value = ((BigDecimal) map.get("SUM")).doubleValue();
             resultMap.put(key, value);
         }
+        return resultMap;
+    }
+
+    @Override
+    public Map<String, Object> getSaleDetailAndAggregationByField(String date,
+                                                                  String keyWord,
+                                                                  String field,
+                                                                  int size,
+                                                                  int startPage,
+                                                                  int pageSize) throws IOException {
+        // 返回的最终结果
+        HashMap<String, Object> resultMap = new HashMap<>();
+        String dsl = DSLUtil.getDSL(date, keyWord, field, size, startPage, pageSize);
+
+
+
+        // 1. es客户端
+        JestClient client = ESUtil.getClient();
+
+        // 2. 查询结果
+        Search search = new Search.Builder(dsl)
+                .addIndex(Constant.INDEX_SALE_DETAIL)
+                .addType("_doc")
+                .build();
+        SearchResult result = client.execute(search);
+        // 3. 解析结果
+        // 3.1 总数
+        Integer total = result.getTotal();
+        resultMap.put("total", total);
+        // 3.2 聚合结果
+
+        // 3.3 详情
+
         return resultMap;
     }
 }

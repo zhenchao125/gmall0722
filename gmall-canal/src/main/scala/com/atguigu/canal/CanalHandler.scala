@@ -17,9 +17,10 @@ import scala.util.Random
 object CanalHandler {
     def handle(tableName: String, rowDataList: util.List[CanalEntry.RowData], eventType: CanalEntry.EventType) = {
         if ("order_info" == tableName && eventType == EventType.INSERT && rowDataList != null && !rowDataList.isEmpty) {
-            
+            println("order_info")
             sendRowDataListToKafka(rowDataList, Constant.TOPIC_ORDER)
-        }else if("order_detail" == tableName && eventType == EventType.INSERT && rowDataList != null && !rowDataList.isEmpty){
+        } else if ("order_detail" == tableName && eventType == EventType.INSERT && rowDataList != null && !rowDataList.isEmpty) {
+            println("order_detail")
             sendRowDataListToKafka(rowDataList, Constant.TOPIC_DETAIL)
             
         }
@@ -27,18 +28,23 @@ object CanalHandler {
     
     
     private def sendRowDataListToKafka(rowDataList: util.List[CanalEntry.RowData], topic: String): Unit = {
-        for (rowData <- rowDataList) {
-            
-            val jsonObj: JSONObject = new JSONObject()
-            // 变化后的列
-            val columnList: util.List[CanalEntry.Column] = rowData.getAfterColumnsList
-            for (column <- columnList) {
-                jsonObj.put(column.getName, column.getValue)
+        
+        new Thread(){
+            override def run(): Unit = {
+                for (rowData <- rowDataList) {
+        
+                    val jsonObj: JSONObject = new JSONObject()
+                    // 变化后的列
+                    val columnList: util.List[CanalEntry.Column] = rowData.getAfterColumnsList
+                    for (column <- columnList) {
+                        jsonObj.put(column.getName, column.getValue)
+                    }
+                    // 写入到Kafka
+                    Thread.sleep(new Random().nextInt(1000 * 8))
+                    MyKafkaUtil.send(topic, jsonObj.toJSONString)
+                }
             }
-            println(jsonObj.toJSONString)
-            // 写入到Kafka
-            Thread.sleep(new Random().nextInt(1000 * 6))
-            MyKafkaUtil.send(topic, jsonObj.toJSONString)
-        }
+        }.start()
+        
     }
 }
