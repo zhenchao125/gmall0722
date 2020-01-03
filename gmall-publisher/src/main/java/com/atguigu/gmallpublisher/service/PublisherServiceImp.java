@@ -7,11 +7,14 @@ import com.atguigu.gmallpublisher.mapper.OrderMapper;
 import io.searchbox.client.JestClient;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
+import io.searchbox.core.search.aggregation.MetricAggregation;
+import io.searchbox.core.search.aggregation.TermsAggregation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +30,6 @@ public class PublisherServiceImp implements PublisherService {
     public DauMapper dauMapper;
     @Autowired
     public OrderMapper orderMapper;
-
 
 
     /**
@@ -71,6 +73,7 @@ public class PublisherServiceImp implements PublisherService {
 
     /**
      * 销售总额
+     *
      * @param date
      * @return
      */
@@ -81,15 +84,14 @@ public class PublisherServiceImp implements PublisherService {
 
     /**
      * 小时明细
+     *
      * @param date
      * @return
      */
     @Override
     public Map<String, Double> getHourAmount(String date) {
 
-
         List<Map<String, Double>> mapList = orderMapper.getHourAmount(date);
-
         Map<String, Double> resultMap = new HashMap<>();
         for (Map map : mapList) {
             String key = (String) map.get("CREATE_HOUR");
@@ -110,8 +112,6 @@ public class PublisherServiceImp implements PublisherService {
         HashMap<String, Object> resultMap = new HashMap<>();
         String dsl = DSLUtil.getDSL(date, keyWord, field, size, startPage, pageSize);
 
-
-
         // 1. es客户端
         JestClient client = ESUtil.getClient();
 
@@ -120,14 +120,29 @@ public class PublisherServiceImp implements PublisherService {
                 .addIndex(Constant.INDEX_SALE_DETAIL)
                 .addType("_doc")
                 .build();
-        SearchResult result = client.execute(search);
+        SearchResult searchResult = client.execute(search);
         // 3. 解析结果
         // 3.1 总数
-        Integer total = result.getTotal();
+        Integer total = searchResult.getTotal();
         resultMap.put("total", total);
-        // 3.2 聚合结果
-
+        // 3.2 聚合结果  "aggMap"-> Map[10->100, 20->200...]
+        HashMap<String, Long> aggMap = new HashMap<>();
+        MetricAggregation aggregations = searchResult.getAggregations();
+        List<TermsAggregation.Entry> buckets = aggregations.getTermsAggregation("groupby_" + field).getBuckets();
+        for (TermsAggregation.Entry bucket : buckets) {
+            String key = bucket.getKey();
+            Long value = bucket.getCount();
+            aggMap.put(key, value);
+        }
+        resultMap.put("aggMap", aggMap);
         // 3.3 详情
+        List<Map<String, Object>> detailList = new ArrayList<>();
+        List<SearchResult.Hit<HashMap, Void>> hits = searchResult.getHits(HashMap.class);
+        for (SearchResult.Hit<HashMap, Void> hit : hits) {
+            HashMap source = hit.source;
+            detailList.add(source);
+        }
+        resultMap.put("detail", detailList);
 
         return resultMap;
     }
